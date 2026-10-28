@@ -1,0 +1,185 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IdeaForge AI — Find your next big idea</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="orb orb-a"></div>
+<div class="orb orb-b"></div>
+
+<nav class="nav">
+    <a class="brand" href="#"><span class="logo">✳</span> IdeaForge<span class="ai">AI</span></a>
+    <div class="nav-right"><span class="dot"></span> Your project innovation partner</div>
+</nav>
+
+<main class="layout">
+<section class="hero">
+    <div class="eyebrow">✦ THINK DIFFERENT. BUILD SOMETHING REAL.</div>
+    <h1>From “what if?”<br>to <span>what's next.</span></h1>
+    <p class="lead">Turn your interests into practical project ideas. Get a problem statement, useful features, a tech stack, and a build roadmap — all in one place.</p>
+
+    <div class="benefits">
+        <div><span class="benefit-icon">✧</span><div><strong>Ideas with purpose</strong><small>Start with a real problem to solve.</small></div></div>
+        <div><span class="benefit-icon">⌘</span><div><strong>Built around your skills</strong><small>Choose a difficulty that fits you.</small></div></div>
+        <div><span class="benefit-icon">↗</span><div><strong>A clear first step</strong><small>Turn the idea into an action plan.</small></div></div>
+    </div>
+
+    <div class="note"><span>✦</span><p>Good projects aren't just impressive — they're useful, achievable, and explained clearly.</p></div>
+</section>
+
+<section class="workspace">
+    <div class="topline">
+        <div><div class="kicker">IDEA GENERATOR</div><h2>Let's forge your idea</h2></div>
+        <div class="icon-bubble">✳</div>
+    </div>
+
+    <p class="helper">Tell us what you know and what you want to build.</p>
+
+    <form id="idea-form">
+        <label for="domain">Choose a domain <b>*</b></label>
+        <select id="domain" required>
+            <option>Artificial Intelligence</option>
+            <option>Data Science &amp; Analytics</option>
+            <option>Education Technology</option>
+            <option>Healthcare Technology</option>
+            <option>Environment &amp; Sustainability</option>
+            <option>Cybersecurity</option>
+            <option>Web Development</option>
+            <option>Smart Agriculture</option>
+            <option>Accessibility &amp; Inclusion</option>
+            <option>Open Innovation</option>
+        </select>
+
+        <div class="row">
+            <div>
+                <label for="difficulty">Difficulty level</label>
+                <select id="difficulty">
+                    <option>Beginner</option>
+                    <option>Intermediate</option>
+                    <option>Advanced</option>
+                </select>
+            </div>
+            <div>
+                <label for="project-type">Project type</label>
+                <select id="project-type">
+                    <option>College mini project</option>
+                    <option>Final year project</option>
+                    <option>Hackathon prototype</option>
+                    <option>Personal portfolio</option>
+                </select>
+            </div>
+        </div>
+
+        <label for="skills">Skills you know <b>*</b></label>
+        <input id="skills" placeholder="e.g. Python basics, HTML, SQL" required>
+
+        <div class="row">
+            <div>
+                <label for="budget">Budget / resources</label>
+                <select id="budget">
+                    <option>Low / free tools</option>
+                    <option>Some budget available</option>
+                    <option>Hardware available</option>
+                </select>
+            </div>
+            <div>
+                <label for="focus">Special interest <span>OPTIONAL</span></label>
+                <input id="focus" placeholder="e.g. help local communities">
+            </div>
+        </div>
+
+        <button id="generate" class="primary" type="submit">
+            <span id="btn-text">Forge my ideas</span><span>↗</span>
+        </button>
+        <p class="privacy">✦ No account required. Don't enter private information.</p>
+    </form>
+
+    <section id="results" class="results hidden" aria-live="polite">
+        <div class="result-heading">
+            <div><div class="kicker">MADE FOR YOUR INPUT</div><h3>Your idea collection</h3></div>
+            <button id="copy" class="copy" type="button">Copy results</button>
+        </div>
+        <div id="output" class="output"></div>
+        <p class="disclaimer">AI-generated suggestions can be inaccurate or similar to existing work. Research and validate your chosen idea before submission.</p>
+    </section>
+</section>
+</main>
+
+<footer><span>IdeaForge AI</span><span>Curiosity is the first step to creation.</span></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+<script>
+const form = document.getElementById("idea-form");
+const button = document.getElementById("generate");
+const btnText = document.getElementById("btn-text");
+const results = document.getElementById("results");
+const output = document.getElementById("output");
+const copyButton = document.getElementById("copy");
+
+form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!form.reportValidity()) return;
+
+    button.disabled = true;
+    btnText.textContent = "Forging ideas...";
+    results.classList.remove("hidden");
+    output.textContent = "Thinking of ideas that fit your skills and constraints…";
+
+    const payload = {
+        domain: document.getElementById("domain").value,
+        difficulty: document.getElementById("difficulty").value,
+        project_type: document.getElementById("project-type").value,
+        skills: document.getElementById("skills").value,
+        budget: document.getElementById("budget").value,
+        focus: document.getElementById("focus").value
+    };
+
+    try {
+        const response = await fetch("/api/generate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Request failed.");
+        }
+
+        if (typeof data.result !== "string") {
+            throw new Error("The server response did not contain project ideas.");
+        }
+
+        if (window.marked && window.DOMPurify) {
+            output.innerHTML = DOMPurify.sanitize(marked.parse(data.result));
+        } else {
+            output.textContent = data.result;
+        }
+    } catch (error) {
+        output.textContent = error.message || "Could not connect to the server. Try again.";
+    } finally {
+        button.disabled = false;
+        btnText.textContent = "Forge my ideas";
+    }
+});
+
+copyButton.addEventListener("click", async () => {
+    try {
+        await navigator.clipboard.writeText(output.innerText);
+        copyButton.textContent = "Copied ✓";
+    } catch (error) {
+        copyButton.textContent = "Select and copy";
+    }
+});
+</script>
+</body>
+</html>
